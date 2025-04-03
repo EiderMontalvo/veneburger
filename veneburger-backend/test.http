@@ -1,0 +1,17 @@
+### Ver productos
+GET http://localhost:3000/api/productos
+
+### Ver categorías
+GET http://localhost:3000/api/categorias
+
+### Ver estado del servidor
+GET http://localhost:3000/health
+
+### Login (post)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@veneburger.com",
+  "password": "admin123"
+}
