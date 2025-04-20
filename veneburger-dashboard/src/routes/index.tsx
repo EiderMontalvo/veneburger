@@ -12,6 +12,11 @@ import AdminLayout from '../components/layout/AdminLayout';
 import PrivateRoute from './PrivateRoute';
 import { checkAuthAsync } from '../features/auth/authSlice';
 import { useAppDispatch } from '../app/store';
+import SpecialDays from '../pages/admin/settings/SpecialDays';
+import OrdersList from '../pages/admin/orders/OrdersList';
+import OrderDetails from '../pages/admin/orders/OrderDetails';
+import DeliveryMap from '../pages/admin/delivery/DeliveryMap';
+import DeliveryManager from '../pages/admin/delivery/DeliveryManager';
 
 const AppRoutes = () => {
   // Usar useAppDispatch en lugar de useDispatch
@@ -45,6 +50,19 @@ const AppRoutes = () => {
           <Route path="products" element={<ProductsList />} />
           <Route path="products/create" element={<ProductForm />} />
           <Route path="products/edit/:id" element={<ProductForm />} />
+          
+          {/* Rutas de configuración */}
+          <Route path="settings">
+            <Route path="special-days" element={<SpecialDays />} />
+          </Route>
+          {/*ordenes*/}
+          <Route path="orders">
+            <Route index element={<OrdersList />} />
+            <Route path=":id" element={<OrderDetails />} />
+          </Route>
+          {/* Ruta del mapa de delivery */}
+          <Route path="delivery/map" element={<DeliveryMap />} />
+          <Route path='delivery' element={<DeliveryManager />} />
         </Route>
       </Route>
       

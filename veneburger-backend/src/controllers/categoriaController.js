@@ -1,7 +1,6 @@
 const { Categoria, Producto } = require('../models');
 const { Op } = require('sequelize');
-const fs = require('fs');
-const path = require('path');
+const uploadController = require('./uploadController');
 
 /**
  * Obtener todas las categorías
@@ -163,12 +162,9 @@ exports.actualizarCategoria = async (req, res) => {
       fecha_actualizacion: new Date()
     });
     
-    // Si se subió una nueva imagen, eliminar la anterior
+    // Si se subió una nueva imagen, eliminar la anterior usando uploadController
     if (req.file && imagenAnterior) {
-      const rutaImagenAnterior = path.join(__dirname, '../../uploads/categorias', imagenAnterior);
-      if (fs.existsSync(rutaImagenAnterior)) {
-        fs.unlinkSync(rutaImagenAnterior);
-      }
+      await uploadController.eliminarArchivo('categorias', imagenAnterior);
     }
     
     return res.status(200).json({
@@ -217,12 +213,9 @@ exports.eliminarCategoria = async (req, res) => {
     // Eliminar categoría
     await categoria.destroy();
     
-    // Eliminar imagen si existe
+    // Eliminar imagen usando uploadController si existe
     if (imagen) {
-      const rutaImagen = path.join(__dirname, '../../uploads/categorias', imagen);
-      if (fs.existsSync(rutaImagen)) {
-        fs.unlinkSync(rutaImagen);
-      }
+      await uploadController.eliminarArchivo('categorias', imagen);
     }
     
     return res.status(200).json({

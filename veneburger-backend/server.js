@@ -13,24 +13,18 @@ const errorHandler = require('./src/middleware/errorHandler');
 const logger = require('./src/middleware/logger');
 const swagger = require('./src/config/swagger');
 
-// Inicializar app
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use('/api-docs', swagger.serve, swagger.setup);
 
-// Configuración de seguridad
 app.use(helmet());
 
-// Configuración específica para producción
 if (process.env.NODE_ENV === 'production') {
-  // Comprimir respuestas
   app.use(compression());
-  
-  // Políticas de seguridad estrictas
   app.use(helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:'],
+      imgSrc: ["'self'", 'data:', '*'],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       upgradeInsecureRequests: [],
@@ -38,69 +32,87 @@ if (process.env.NODE_ENV === 'production') {
   }));
 }
 
-// Limitar peticiones
-const limiter = rateLimit({
-  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === 'production' 
-    ? (process.env.RATE_LIMIT_MAX || 60) // Más estricto en producción
-    : (process.env.RATE_LIMIT_MAX || 100), // Más permisivo en desarrollo
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:3001'];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true,
+  maxAge: 86400
+}));
+
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 'error',
+    message: 'Demasiados intentos de autenticación, por favor intente más tarde.'
+  }
+});
+
+const generalLimiter = rateLimit({
+  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 300 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     status: 'error',
     message: 'Demasiadas solicitudes, por favor intente más tarde.'
-  }
+  },
+  skip: (req) => process.env.NODE_ENV === 'development' && req.method === 'GET'
 });
-app.use(limiter);
 
-// Middleware para parsear JSON
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use('/api/auth', authLimiter);
+app.use('/api', generalLimiter);
 
-// CORS
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true,
-  maxAge: 86400 // 24 horas (CORS preflight cache)
-};
-app.use(cors(corsOptions));
-
-// Logging
 if (process.env.NODE_ENV === 'production') {
-  // En producción, usar el logger personalizado
   app.use(logger.logRequest);
 } else {
-  // En desarrollo, usar morgan para formato más legible en consola
   app.use(morgan('dev'));
 }
 
-// Servir archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  maxAge: '7d' // Cache de 7 días para archivos estáticos
+  maxAge: '7d',
+  setHeaders: function (res, req) {
+    const origin = req.headers && req.headers.origin && allowedOrigins.includes(req.headers.origin)
+      ? req.headers.origin 
+      : allowedOrigins[0];
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+  }
 }));
 
-// Añadir timestamp a todas las solicitudes
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
 
-// Rutas API
 app.use('/api', routes);
 
-// Ruta para verificar estado del servidor
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Servidor funcionando correctamente',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    uptime: process.uptime()
+    environment: process.env.NODE_ENV
   });
 });
 
-// Manejador de rutas no encontradas
 app.use('*', (req, res) => {
   res.status(404).json({
     status: 'error',
@@ -108,34 +120,25 @@ app.use('*', (req, res) => {
   });
 });
 
-// Manejador de errores global
 app.use(errorHandler);
 
-// Función para sincronizar la base de datos y arrancar servidor
 const startServer = async () => {
   try {
-    // Probar la conexión a la base de datos primero
     const connected = await testConnection();
     if (!connected) {
       throw new Error('No se pudo establecer conexión con la base de datos MySQL');
     }
     
-    // Opciones de sincronización según ambiente
     const syncOptions = {
-      // En desarrollo, podemos alterar las tablas (crear columnas que falten)
-      // En producción, no modificamos nada automáticamente
       alter: process.env.NODE_ENV === 'development'
     };
     
-    // Sincronizar base de datos
     await db.sequelize.sync(syncOptions);
     logger.info('Base de datos sincronizada correctamente');
     
-    // Iniciar servidor
     app.listen(PORT, () => {
       logger.info(`Servidor iniciado en puerto ${PORT}`);
       logger.info(`Ambiente: ${process.env.NODE_ENV}`);
-      logger.info(`Fecha de inicio: ${new Date().toLocaleString()}`);
     });
   } catch (error) {
     logger.error('Error al iniciar el servidor:', error);
@@ -143,18 +146,14 @@ const startServer = async () => {
   }
 };
 
-// Iniciar el servidor
 startServer();
 
-// Manejo de excepciones no capturadas
 process.on('unhandledRejection', (err) => {
   logger.error('ERROR NO CAPTURADO (Promise):', err);
-  // Cierre controlado
   process.exit(1);
 });
 
 process.on('uncaughtException', (err) => {
   logger.error('ERROR NO CAPTURADO (Exception):', err);
-  // Cierre controlado
   process.exit(1);
 });

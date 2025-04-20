@@ -1,21 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Card,
-  CardContent,
-  Divider,
-  Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  CircularProgress,
-  Alert,
-  useTheme,
+  Box, Paper, Typography, Card, CardContent, Divider, Button, MenuItem, Select, FormControl, InputLabel,
+  CircularProgress, Alert, useTheme, Stack, alpha, GlobalStyles
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
 import {
   RestaurantMenu,
   AttachMoney as MoneyIcon,
@@ -279,9 +266,38 @@ const Dashboard = () => {
     }
   ];
   
+  // Estilos globales para corregir el centrado del Grid
+  const gridStyles = (
+    <GlobalStyles
+      styles={{
+        '.MuiGrid-root.MuiGrid-container': {
+          margin: '0 auto !important',
+          width: '100% !important',
+          maxWidth: '100% !important',
+          padding: '0 !important'
+        },
+        '.MuiGrid-item': {
+          padding: '12px !important'
+        }
+      }}
+    />
+  );
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ 
+      width: '100%', 
+      maxWidth: '100%',
+      mx: 'auto',
+      px: { xs: 2, sm: 3, md: 4 },
+      py: 2,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      {/* Aplicar estilos globales para corregir Grid */}
+      {gridStyles}
+      
+      <Box sx={{ width: '100%', maxWidth: 1400, mb: 4 }}>
         <Typography variant="h4" fontWeight="bold">
           Dashboard
         </Typography>
@@ -290,53 +306,76 @@ const Dashboard = () => {
         </Typography>
       </Box>
       
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Período</InputLabel>
-          <Select
-            value={rangoFechas}
-            onChange={(e) => setRangoFechas(e.target.value)}
-            label="Período"
-          >
-            <MenuItem value="7">Últimos 7 días</MenuItem>
-            <MenuItem value="15">Últimos 15 días</MenuItem>
-            <MenuItem value="30">Últimos 30 días</MenuItem>
-            <MenuItem value="60">Últimos 60 días</MenuItem>
-            <MenuItem value="90">Últimos 90 días</MenuItem>
-          </Select>
-        </FormControl>
-        
-        <Box>
-          <Button 
-            variant={periodoVentas === 'diarias' ? 'contained' : 'outlined'}
-            color="primary"
-            onClick={() => setPeriodoVentas('diarias')}
-            sx={{ mr: 1 }}
-          >
-            Diario
-          </Button>
-          <Button 
-            variant={periodoVentas === 'mensuales' ? 'contained' : 'outlined'}
-            color="primary"
-            onClick={() => setPeriodoVentas('mensuales')}
-          >
-            Mensual
-          </Button>
-        </Box>
+      <Box sx={{ width: '100%', maxWidth: 1400, mb: 4 }}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={2} 
+          justifyContent="space-between" 
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+        >
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Período</InputLabel>
+            <Select
+              value={rangoFechas}
+              onChange={(e) => setRangoFechas(e.target.value)}
+              label="Período"
+            >
+              <MenuItem value="7">Últimos 7 días</MenuItem>
+              <MenuItem value="15">Últimos 15 días</MenuItem>
+              <MenuItem value="30">Últimos 30 días</MenuItem>
+              <MenuItem value="60">Últimos 60 días</MenuItem>
+              <MenuItem value="90">Últimos 90 días</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <Stack direction="row" spacing={1}>
+            <Button 
+              variant={periodoVentas === 'diarias' ? 'contained' : 'outlined'}
+              color="primary"
+              onClick={() => setPeriodoVentas('diarias')}
+            >
+              Diario
+            </Button>
+            <Button 
+              variant={periodoVentas === 'mensuales' ? 'contained' : 'outlined'}
+              color="primary"
+              onClick={() => setPeriodoVentas('mensuales')}
+            >
+              Mensual
+            </Button>
+          </Stack>
+        </Stack>
       </Box>
       
-      {/* Tarjetas de resumen */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      {/* Tarjetas de resumen - Usando Box en lugar de Grid */}
+      <Box 
+        sx={{ 
+          width: '100%', 
+          maxWidth: 1400, 
+          mb: 4, 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 3,
+          justifyContent: 'center'
+        }}
+      >
         {tarjetasResumen.map((tarjeta, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Box 
+            key={index} 
+            sx={{ 
+              width: { xs: '100%', sm: 'calc(50% - 24px)', md: 'calc(33.333% - 24px)' },
+              minWidth: { xs: '100%', sm: 300, md: 250 }
+            }}
+          >
             <Card 
               sx={{ 
                 height: '100%', 
-                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                borderRadius: 2,
                 transition: 'transform 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
                 }
               }}
             >
@@ -345,168 +384,228 @@ const Dashboard = () => {
                   <Box 
                     sx={{ 
                       mr: 2, 
-                      p: 1, 
-                      borderRadius: '8px', 
+                      p: 1.5, 
+                      borderRadius: '12px', 
                       display: 'flex',
                       bgcolor: `${tarjeta.color}15`
                     }}
                   >
-                    <Box sx={{ color: tarjeta.color }}>
+                    <Box sx={{ color: tarjeta.color, fontSize: 26 }}>
                       {tarjeta.icon}
                     </Box>
                   </Box>
-                  <Typography variant="subtitle1" color="text.secondary">
+                  <Typography variant="h6" color="text.secondary">
                     {tarjeta.title}
                   </Typography>
                 </Box>
                 
-                <Typography variant="h4" fontWeight="bold">
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
                   {tarjeta.formato === 'moneda' 
                     ? formatearMoneda(tarjeta.value) 
                     : tarjeta.value.toLocaleString()}
                 </Typography>
                 
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Últimos {rangoFechas} días
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
       
-      {/* Gráficos */}
-      <Grid container spacing={3}>
+      {/* Gráficos con Box en lugar de Grid */}
+      <Box 
+        sx={{ 
+          width: '100%', 
+          maxWidth: 1400, 
+          mb: 4, 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 3,
+          justifyContent: 'center'
+        }}
+      >
         {/* Gráfico de ventas (diarias o mensuales) */}
-        <Grid item xs={12} md={8}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
+        <Box sx={{ width: { xs: '100%', md: 'calc(66.666% - 12px)' } }}>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 2,
+              boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Evolución de Ventas {periodoVentas === 'diarias' ? 'Diarias' : 'Mensuales'}
               </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 3 }} />
               
               {periodoVentas === 'diarias' ? (
                 loadingDaily ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
                     <CircularProgress />
                   </Box>
                 ) : errorDaily ? (
-                  <Alert severity="error" sx={{ mb: 2 }}>
+                  <Alert severity="error" sx={{ mb: 3 }}>
                     {errorDaily}
                   </Alert>
                 ) : (
-                  <ResponsiveContainer width="100%" height={350}>
-                    <LineChart
-                      data={formatearDatosVentasDiarias()}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="fecha" />
-                      <YAxis yAxisId="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip content={<CustomTooltipVentas />} />
-                      <Legend />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ventas"
-                        name="Ventas (S/)"
-                        stroke={theme.palette.primary.main}
-                        activeDot={{ r: 8 }}
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="pedidos"
-                        name="Pedidos"
-                        stroke={theme.palette.secondary.main}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <Box sx={{ width: '100%', height: 380 }}>
+                    <ResponsiveContainer>
+                      <LineChart
+                        data={formatearDatosVentasDiarias()}
+                        margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                        <XAxis 
+                          dataKey="fecha" 
+                          tick={{ fill: theme.palette.text.secondary }}
+                          stroke={theme.palette.divider}
+                        />
+                        <YAxis 
+                          yAxisId="left"
+                          tick={{ fill: theme.palette.text.secondary }}
+                          stroke={theme.palette.divider}
+                        />
+                        <YAxis 
+                          yAxisId="right" 
+                          orientation="right"
+                          tick={{ fill: theme.palette.text.secondary }} 
+                          stroke={theme.palette.divider}
+                        />
+                        <Tooltip content={<CustomTooltipVentas />} />
+                        <Legend wrapperStyle={{ paddingTop: 15 }} />
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="ventas"
+                          name="Ventas (S/)"
+                          stroke={theme.palette.primary.main}
+                          strokeWidth={2}
+                          activeDot={{ r: 8 }}
+                        />
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="pedidos"
+                          name="Pedidos"
+                          stroke={theme.palette.secondary.main}
+                          strokeWidth={2}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </Box>
                 )
               ) : (
                 loadingMonthly ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
                     <CircularProgress />
                   </Box>
                 ) : errorMonthly ? (
-                  <Alert severity="error" sx={{ mb: 2 }}>
+                  <Alert severity="error" sx={{ mb: 3 }}>
                     {errorMonthly}
                   </Alert>
                 ) : (
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart
-                      data={formatearDatosVentasMensuales()}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="mes" />
-                      <YAxis yAxisId="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip content={<CustomTooltipVentas />} />
-                      <Legend />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="ventas"
-                        name="Ventas (S/)"
-                        fill={theme.palette.primary.main}
-                      />
-                      <Bar
-                        yAxisId="right"
-                        dataKey="pedidos"
-                        name="Pedidos"
-                        fill={theme.palette.secondary.main}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <Box sx={{ width: '100%', height: 380 }}>
+                    <ResponsiveContainer>
+                      <BarChart
+                        data={formatearDatosVentasMensuales()}
+                        margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                        <XAxis 
+                          dataKey="mes" 
+                          tick={{ fill: theme.palette.text.secondary }}
+                          stroke={theme.palette.divider}
+                        />
+                        <YAxis 
+                          yAxisId="left"
+                          tick={{ fill: theme.palette.text.secondary }}
+                          stroke={theme.palette.divider}
+                        />
+                        <YAxis 
+                          yAxisId="right" 
+                          orientation="right"
+                          tick={{ fill: theme.palette.text.secondary }}
+                          stroke={theme.palette.divider}
+                        />
+                        <Tooltip content={<CustomTooltipVentas />} />
+                        <Legend wrapperStyle={{ paddingTop: 15 }} />
+                        <Bar
+                          yAxisId="left"
+                          dataKey="ventas"
+                          name="Ventas (S/)"
+                          fill={theme.palette.primary.main}
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar
+                          yAxisId="right"
+                          dataKey="pedidos"
+                          name="Pedidos"
+                          fill={theme.palette.secondary.main}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Box>
                 )
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
         
         {/* Gráfico de ventas por tipo */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
+        <Box sx={{ width: { xs: '100%', md: 'calc(33.333% - 12px)' } }}>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 2,
+              boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Ventas por Tipo de Pedido
               </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 3 }} />
               
               {loadingTypes ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
                   <CircularProgress />
                 </Box>
               ) : errorTypes ? (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert severity="error" sx={{ mb: 3 }}>
                   {errorTypes}
                 </Alert>
               ) : (
                 <Box>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={formatearDatosVentasPorTipo()}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {formatearDatosVentasPorTipo().map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={COLORES_GRAFICA[index % COLORES_GRAFICA.length]} 
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltipPie />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <Box sx={{ width: '100%', height: 270, mt: 2, display: 'flex', justifyContent: 'center' }}>
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie
+                          data={formatearDatosVentasPorTipo()}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          innerRadius={70}
+                          outerRadius={100}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {formatearDatosVentasPorTipo().map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={COLORES_GRAFICA[index % COLORES_GRAFICA.length]} 
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltipPie />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Box>
+                  
+                  <Divider sx={{ mt: 3, mb: 2 }} />
                   
                   <Box sx={{ mt: 2 }}>
                     {formatearDatosVentasPorTipo().map((entry, index) => (
@@ -515,25 +614,25 @@ const Dashboard = () => {
                         sx={{ 
                           display: 'flex', 
                           alignItems: 'center', 
-                          mb: 1,
+                          mb: 1.5,
                           justifyContent: 'space-between'
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Box 
                             sx={{ 
-                              width: 14, 
-                              height: 14, 
+                              width: 16, 
+                              height: 16, 
                               bgcolor: COLORES_GRAFICA[index % COLORES_GRAFICA.length],
-                              borderRadius: '3px',
-                              mr: 1
+                              borderRadius: '4px',
+                              mr: 1.5
                             }} 
                           />
-                          <Typography variant="body2">
+                          <Typography variant="body2" fontWeight="medium">
                             {entry.name}
                           </Typography>
                         </Box>
-                        <Typography variant="body2" fontWeight="medium">
+                        <Typography variant="body2" fontWeight="bold">
                           {formatearMoneda(entry.value)}
                         </Typography>
                       </Box>
@@ -543,131 +642,174 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
-        
-        {/* Tabla de productos más vendidos */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Productos Más Vendidos
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              {loadingProducts ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
-                  <CircularProgress />
-                </Box>
-              ) : errorProducts ? (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {errorProducts}
-                </Alert>
-              ) : (
-                <Box>
-                  {productosMasVendidos?.productosMasVendidos && productosMasVendidos.productosMasVendidos.length > 0 ? (
-                    <Box sx={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr>
-                            <th style={{ 
-                              textAlign: 'left', 
-                              padding: '12px 8px', 
-                              borderBottom: `1px solid ${theme.palette.divider}` 
+        </Box>
+      </Box>
+      
+      {/* Tabla de productos más vendidos */}
+      <Box sx={{ width: '100%', maxWidth: 1400, mb: 2 }}>
+        <Card
+          sx={{ 
+            borderRadius: 2,
+            boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Productos Más Vendidos
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            {loadingProducts ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : errorProducts ? (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {errorProducts}
+              </Alert>
+            ) : (
+              <Box>
+                {productosMasVendidos?.productosMasVendidos && productosMasVendidos.productosMasVendidos.length > 0 ? (
+                  <Box sx={{ overflowX: 'auto', width: '100%' }}>
+                    <table style={{ 
+                      width: '100%', 
+                      borderCollapse: 'collapse', 
+                      tableLayout: 'fixed',
+                      margin: '0 auto'
+                    }}>
+                      <thead>
+                        <tr>
+                          <th style={{ 
+                            textAlign: 'left', 
+                            padding: '14px 12px', 
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            width: '25%',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                            fontWeight: 'bold',
+                            fontSize: '0.875rem'
+                          }}>
+                            Producto
+                          </th>
+                          <th style={{ 
+                            textAlign: 'left', 
+                            padding: '14px 12px', 
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            width: '20%',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                            fontWeight: 'bold',
+                            fontSize: '0.875rem'
+                          }}>
+                            Categoría
+                          </th>
+                          <th style={{ 
+                            textAlign: 'right', 
+                            padding: '14px 12px', 
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            width: '15%',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                            fontWeight: 'bold',
+                            fontSize: '0.875rem'
+                          }}>
+                            Unidades
+                          </th>
+                          <th style={{ 
+                            textAlign: 'right', 
+                            padding: '14px 12px', 
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            width: '15%',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                            fontWeight: 'bold',
+                            fontSize: '0.875rem'
+                          }}>
+                            Precio Unit.
+                          </th>
+                          <th style={{ 
+                            textAlign: 'right', 
+                            padding: '14px 12px', 
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            width: '15%',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                            fontWeight: 'bold',
+                            fontSize: '0.875rem'
+                          }}>
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {productosMasVendidos.productosMasVendidos.map((producto, index) => (
+                          <tr key={index} style={{
+                            backgroundColor: index % 2 === 0 ? 'transparent' : alpha(theme.palette.primary.main, 0.01)
+                          }}>
+                            <td style={{ 
+                              padding: '14px 12px', 
+                              borderBottom: `1px solid ${theme.palette.divider}`,
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word'
                             }}>
-                              Producto
-                            </th>
-                            <th style={{ 
-                              textAlign: 'left', 
-                              padding: '12px 8px', 
-                              borderBottom: `1px solid ${theme.palette.divider}` 
+                              {producto.producto.nombre}
+                            </td>
+                            <td style={{ 
+                              padding: '14px 12px', 
+                              borderBottom: `1px solid ${theme.palette.divider}`,
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word'
                             }}>
-                              Categoría
-                            </th>
-                            <th style={{ 
+                              {producto.producto.categoria.nombre}
+                            </td>
+                            <td style={{ 
                               textAlign: 'right', 
-                              padding: '12px 8px', 
+                              padding: '14px 12px', 
                               borderBottom: `1px solid ${theme.palette.divider}` 
                             }}>
-                              Unidades
-                            </th>
-                            <th style={{ 
+                              {parseInt(producto.unidades_vendidas).toLocaleString()}
+                            </td>
+                            <td style={{ 
                               textAlign: 'right', 
-                              padding: '12px 8px', 
+                              padding: '14px 12px', 
                               borderBottom: `1px solid ${theme.palette.divider}` 
                             }}>
-                              Precio Unit.
-                            </th>
-                            <th style={{ 
+                              {formatearMoneda(Number(producto.producto.precio))}
+                            </td>
+                            <td style={{ 
                               textAlign: 'right', 
-                              padding: '12px 8px', 
-                              borderBottom: `1px solid ${theme.palette.divider}` 
+                              padding: '14px 12px', 
+                              borderBottom: `1px solid ${theme.palette.divider}`,
+                              fontWeight: 'bold',
+                              color: theme.palette.primary.main
                             }}>
-                              Total
-                            </th>
+                              {formatearMoneda(parseFloat(producto.total_ventas))}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {productosMasVendidos.productosMasVendidos.map((producto, index) => (
-                            <tr key={index}>
-                              <td style={{ 
-                                padding: '12px 8px', 
-                                borderBottom: `1px solid ${theme.palette.divider}` 
-                              }}>
-                                {producto.producto.nombre}
-                              </td>
-                              <td style={{ 
-                                padding: '12px 8px', 
-                                borderBottom: `1px solid ${theme.palette.divider}` 
-                              }}>
-                                {producto.producto.categoria.nombre}
-                              </td>
-                              <td style={{ 
-                                textAlign: 'right', 
-                                padding: '12px 8px', 
-                                borderBottom: `1px solid ${theme.palette.divider}` 
-                              }}>
-                                {parseInt(producto.unidades_vendidas).toLocaleString()}
-                              </td>
-                              <td style={{ 
-                                textAlign: 'right', 
-                                padding: '12px 8px', 
-                                borderBottom: `1px solid ${theme.palette.divider}` 
-                              }}>
-                                {formatearMoneda(parseFloat(producto.producto.precio))}
-                              </td>
-                              <td style={{ 
-                                textAlign: 'right', 
-                                padding: '12px 8px', 
-                                borderBottom: `1px solid ${theme.palette.divider}`,
-                                fontWeight: 'bold' 
-                              }}>
-                                {formatearMoneda(parseFloat(producto.total_ventas))}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </Box>
-                  ) : (
-                    <Typography align="center" color="text.secondary" sx={{ my: 3 }}>
-                      No hay datos de ventas en el período seleccionado
-                    </Typography>
-                  )}
-                  
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button 
-                      variant="outlined" 
-                      onClick={() => {/* Navegar a reporte completo */}}
-                    >
-                      Ver Reporte Completo
-                    </Button>
+                        ))}
+                      </tbody>
+                    </table>
                   </Box>
+                ) : (
+                  <Typography align="center" color="text.secondary" sx={{ my: 4, py: 2 }}>
+                    No hay datos de ventas en el período seleccionado
+                  </Typography>
+                )}
+                
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => {/* Navegar a reporte completo */}}
+                    sx={{ 
+                      px: 3,
+                      py: 1,
+                      borderRadius: '8px',
+                      fontWeight: 'medium'
+                    }}
+                  >
+                    Ver Reporte Completo
+                  </Button>
                 </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

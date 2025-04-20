@@ -1,7 +1,6 @@
 const { Producto, Categoria, DetallePedido } = require('../models');
 const { Op } = require('sequelize');
-const fs = require('fs');
-const path = require('path');
+const uploadController = require('./uploadController');
 
 /**
  * Listar productos con filtros opcionales
@@ -278,13 +277,9 @@ exports.actualizarProducto = async (req, res) => {
     });
     
     // Si se subió una nueva imagen y la anterior no es la default, eliminar la anterior
-    if (req.file && imagenAnterior && imagenAnterior !== 'default.png') {
-      const rutaImagenAnterior = path.join(__dirname, '../../uploads/productos', imagenAnterior);
-      if (fs.existsSync(rutaImagenAnterior)) {
-        fs.unlinkSync(rutaImagenAnterior);
-      }
+    if (req.file && imagenAnterior && imagenAnterior !== 'default.png'){
+      await uploadController.eliminarArchivo('productos', imagenAnterior);
     }
-    
     return res.status(200).json({
       status: 'success',
       message: 'Producto actualizado correctamente',
@@ -337,14 +332,9 @@ exports.eliminarProducto = async (req, res) => {
     // Eliminar producto
     await producto.destroy();
     
-    // Eliminar imagen si existe y no es la default
     if (imagen && imagen !== 'default.png') {
-      const rutaImagen = path.join(__dirname, '../../uploads/productos', imagen);
-      if (fs.existsSync(rutaImagen)) {
-        fs.unlinkSync(rutaImagen);
-      }
+      await uploadController.eliminarArchivo('productos', imagen);
     }
-    
     return res.status(200).json({
       status: 'success',
       message: 'Producto eliminado correctamente'

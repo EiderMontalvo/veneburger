@@ -1,21 +1,8 @@
 import { useState, useEffect } from 'react';
 import { 
-  Box, 
-  Button, 
-  Paper, 
-  Typography, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  IconButton,
-  Switch,
-  Chip,
-  CircularProgress,
-  Alert,
-  Tooltip
+  Box, Button, Paper, Typography,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  IconButton, Switch, Chip, CircularProgress, Alert, Tooltip
 } from '@mui/material';
 import { 
   Add, 
@@ -28,6 +15,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
+import { getImageUrl } from '../../../utils/imageUtils';
+import ImageWithFallback from '../../../components/common/ImageWithFallback';
+import { deleteFile } from '../../../services/uploadService';
 
 interface Categoria {
   id: number;
@@ -117,6 +107,14 @@ const CategoriesList = () => {
     if (!deleteDialog.category) return;
     
     try {
+      setLoading(true);
+      
+      // Primero eliminar la imagen si existe
+      if (deleteDialog.category.imagen) {
+        await deleteFile('categorias', deleteDialog.category.imagen);
+      }
+      
+      // Luego eliminar la categoría
       await api.delete(`/categorias/${deleteDialog.category.id}`);
       
       // Actualizar localmente
@@ -125,6 +123,7 @@ const CategoriesList = () => {
       );
       
       setDeleteDialog({ open: false, category: null });
+      setLoading(false);
     } catch (err: any) {
       console.error('Error al eliminar categoría:', err);
       
@@ -135,6 +134,7 @@ const CategoriesList = () => {
         setError('No se pudo eliminar la categoría.');
       }
       setDeleteDialog({ open: false, category: null });
+      setLoading(false);
     }
   };
 
@@ -205,10 +205,10 @@ const CategoriesList = () => {
                     </TableCell>
                     <TableCell>
                       {category.imagen ? (
-                        <Box 
-                          component="img" 
-                          src={`/api/uploads/categorias/${category.imagen}`}
+                        <ImageWithFallback
+                          src={getImageUrl('categorias', category.imagen, true)}
                           alt={category.nombre}
+                          fallbackSrc={getImageUrl('categorias', 'default.png', true)}
                           sx={{ 
                             width: 50, 
                             height: 50, 

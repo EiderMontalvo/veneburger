@@ -1,37 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  Box, 
-  Button, 
-  Paper, 
-  Typography, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  IconButton,
-  Switch,
-  Chip,
-  CircularProgress,
-  Alert,
-  Tooltip,
-  TextField,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  SelectChangeEvent
+  Box, Button, Paper, Typography, Table, TableBody, TableCell, TableContainer, 
+  TableHead, TableRow, IconButton, Switch, Chip, CircularProgress, Alert,
+  Tooltip, MenuItem, FormControl, InputLabel, Select, SelectChangeEvent
 } from '@mui/material';
 import { 
-  Add, 
-  Edit, 
-  Delete, 
-  Search
+  Add, Edit, Delete, Clear
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
+import { getImageUrl } from '../../../utils/imageUtils';
+import ImageWithFallback from '../../../components/common/ImageWithFallback';
+import { deleteFile } from '../../../services/uploadService';
 
 interface Categoria {
   id: number;
@@ -44,7 +25,7 @@ interface Producto {
   nombre: string;
   codigo?: string;
   descripcion?: string;
-  precio: string | number;  // Aceptar ambos tipos para mayor flexibilidad
+  precio: string | number;
   imagen?: string;
   categoria_id: number;
   categoria?: Categoria;
@@ -55,11 +36,11 @@ interface Producto {
   fecha_actualizacion: string;
 }
 
+// Simplificamos FilterState quitando 'nombre'
 interface FilterState {
   categoria_id: string;
   disponible: string;
   destacado: string;
-  nombre: string;
 }
 
 const ProductsList = () => {
@@ -73,15 +54,14 @@ const ProductsList = () => {
     product: null 
   });
   
-  // Filtros
+  // Estados de filtros (simplificados sin nombre)
   const [filters, setFilters] = useState<FilterState>({
     categoria_id: '',
     disponible: '',
-    destacado: '',
-    nombre: ''
+    destacado: ''
   });
 
-  // Cargar categorías para el filtro - Usando useCallback para evitar recreaciones
+  // Cargar categorías para el filtro
   const fetchCategories = useCallback(async () => {
     try {
       const response = await api.get('/categorias');
@@ -91,7 +71,7 @@ const ProductsList = () => {
     }
   }, []);
 
-  // Cargar productos con filtros - Usando useCallback para evitar recreaciones
+  // Cargar productos con filtros
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -110,11 +90,7 @@ const ProductsList = () => {
         params.append('destacado', filters.destacado);
       }
       
-      if (filters.nombre) {
-        params.append('nombre', filters.nombre);
-      }
-      
-      // Añadir timestamp para evitar problemas de caché en respuestas 304
+      // Añadir timestamp para evitar problemas de caché
       const timestamp = new Date().getTime();
       params.append('_t', timestamp.toString());
       
@@ -127,25 +103,23 @@ const ProductsList = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters]); // Añadir filters como dependencia
+  }, [filters]); // Dependencia en filters
 
   useEffect(() => {
     fetchCategories();
-    fetchProducts();
-  }, [fetchCategories, fetchProducts]); // Incluir estas funciones como dependencias
+  }, [fetchCategories]); // Incluir dependencia
 
-  // Aplicar filtros
-  const handleApplyFilters = () => {
+  // Efecto separado para productos que se actualiza cuando cambian los filtros
+  useEffect(() => {
     fetchProducts();
-  };
+  }, [fetchProducts]);
 
-  // Limpiar filtros
+  // Limpiar todos los filtros
   const handleClearFilters = () => {
     setFilters({
       categoria_id: '',
       disponible: '',
-      destacado: '',
-      nombre: ''
+      destacado: ''
     });
   };
 
@@ -173,6 +147,14 @@ const ProductsList = () => {
     if (!deleteDialog.product) return;
     
     try {
+      setLoading(true);
+      
+      // Primero eliminar la imagen si existe
+      if (deleteDialog.product.imagen && deleteDialog.product.imagen !== 'default.png') {
+        await deleteFile('productos', deleteDialog.product.imagen);
+      }
+      
+      // Luego eliminar el producto
       await api.delete(`/productos/${deleteDialog.product.id}`);
       
       // Actualizar localmente
@@ -181,20 +163,13 @@ const ProductsList = () => {
       );
       
       setDeleteDialog({ open: false, product: null });
+      setLoading(false);
     } catch (err) {
       console.error('Error al eliminar producto:', err);
       setError('No se pudo eliminar el producto.');
       setDeleteDialog({ open: false, product: null });
+      setLoading(false);
     }
-  };
-
-  // Manejar cambio en campos de texto
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   // Manejar cambio en selects
@@ -228,17 +203,7 @@ const ProductsList = () => {
           Filtros
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          <TextField
-            label="Nombre"
-            name="nombre"
-            value={filters.nombre}
-            onChange={handleTextChange}
-            variant="outlined"
-            size="small"
-            sx={{ flex: 1, minWidth: 120 }}
-          />
-          
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 120, flex: 1 }}>
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 150, flex: 1 }}>
             <InputLabel>Categoría</InputLabel>
             <Select
               name="categoria_id"
@@ -255,7 +220,7 @@ const ProductsList = () => {
             </Select>
           </FormControl>
           
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Disponibilidad</InputLabel>
             <Select
               name="disponible"
@@ -269,7 +234,7 @@ const ProductsList = () => {
             </Select>
           </FormControl>
           
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Destacado</InputLabel>
             <Select
               name="destacado"
@@ -285,17 +250,11 @@ const ProductsList = () => {
           
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button 
-              variant="contained" 
-              onClick={handleApplyFilters}
-              startIcon={<Search />}
-            >
-              Filtrar
-            </Button>
-            <Button 
               variant="outlined" 
               onClick={handleClearFilters}
+              startIcon={<Clear />}
             >
-              Limpiar
+              Limpiar filtros
             </Button>
           </Box>
         </Box>
@@ -331,34 +290,17 @@ const ProductsList = () => {
                 {products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
-                      {product.imagen ? (
-                        <Box 
-                          component="img" 
-                          src={`/api/uploads/productos/${product.imagen}`}
-                          alt={product.nombre}
-                          sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            objectFit: 'cover',
-                            borderRadius: 1
-                          }}
-                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                            e.currentTarget.src = '/images/default.png';
-                          }}
-                        />
-                      ) : (
-                        <Box 
-                          component="img" 
-                          src="/images/default.png"
-                          alt="Default"
-                          sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            objectFit: 'cover',
-                            borderRadius: 1
-                          }}
-                        />
-                      )}
+                      <ImageWithFallback
+                        src={getImageUrl('productos', product.imagen, true, true)}
+                        alt={product.nombre || 'Producto'}
+                        fallbackSrc={getImageUrl('productos', 'default.png', true)}
+                        sx={{ 
+                          width: 50, 
+                          height: 50, 
+                          objectFit: 'cover',
+                          borderRadius: 1
+                        }}
+                      />
                     </TableCell>
                     <TableCell>{product.codigo || '—'}</TableCell>
                     <TableCell>{product.nombre}</TableCell>

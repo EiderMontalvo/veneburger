@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Box, AppBar, Toolbar, Typography, Container, IconButton, 
+  Box, AppBar, Toolbar, Typography, IconButton, 
   Drawer, List, Divider, ListItemButton, ListItemIcon, ListItemText, 
   Avatar, Menu, MenuItem, useTheme, useMediaQuery,
-  alpha, Paper
+  alpha, Paper, styled, GlobalStyles
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -20,6 +20,45 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+
+// Estilos globales para eliminar el margin-left en todas las clases posibles
+const globalStyles = (
+  <GlobalStyles
+    styles={{
+      '.main-content-box.MuiBox-root.css-10pz13g, .css-10pz13g, .MuiDrawer-docked + .MuiBox-root, .main-content-box': {
+        marginLeft: '0 !important',
+        paddingLeft: '0 !important'
+      }
+    }}
+  />
+);
+
+// Componente personalizado para corregir el problema del drawer docked
+const FixedDrawer = styled(Drawer)(({ theme, open, drawerwidth }) => ({
+  width: drawerwidth,
+  flexShrink: 0,
+  [`& .MuiDrawer-paper`]: {
+    width: drawerwidth,
+    boxSizing: 'border-box',
+    borderRight: '1px solid rgba(0, 0, 0, 0.08)',
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: open ? '4px 0 8px rgba(0, 0, 0, 0.05)' : 'none',
+  },
+  // Sobreescribir el estilo problemático
+  '&.MuiDrawer-docked': {
+    '& .MuiDrawer-paper': {
+      position: 'fixed',
+    },
+    // Anular cualquier espaciado adicional que el drawer docked pueda estar aplicando
+    '& + .MuiBox-root': {
+      padding: 0,
+      marginLeft: '0 !important', // Establecer a 0 de forma forzada
+      paddingLeft: '0 !important',
+      transition: 'none' // Prevenir transiciones problemáticas
+    }
+  }
+}));
 
 const drawerWidth = 260;
 
@@ -58,6 +97,24 @@ const menuItems = [
     icon: <PeopleIcon />, 
     path: '/admin/users'
   },
+  {
+    text: 'Delivery',
+    icon: <LocalShippingIcon />,
+    path: '/admin/delivery',
+    submenu: [
+      { text: 'Gestión de pedidos', path: '/admin/delivery' },
+      { text: 'Mapa de entregas', path: '/admin/delivery/map' }
+    ]
+  },
+  { 
+    text: 'Configuración', 
+    icon: <SettingsIcon />, 
+    path: '/admin/settings',
+    submenu: [
+      { text: 'Días Especiales', path: '/admin/settings/special-days' },
+      { text: 'General', path: '/admin/settings' }
+    ]
+  },
 ];
 
 const AdminLayout = () => {
@@ -70,13 +127,47 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // CAMBIO AQUÍ: usuario en lugar de user
   const { usuario } = useSelector((state) => state.auth);
+
+  // Determinar si la página actual es el Dashboard
+  const isDashboard = location.pathname === '/admin' || location.pathname === '/admin/';
 
   // Ajusta el drawer cuando cambia el tamaño de la pantalla
   useEffect(() => {
     setOpen(!isMobile);
   }, [isMobile]);
+
+  // Corrección específica para el margin-left en la clase css-10pz13g
+  useEffect(() => {
+    const fixMarginLeft = () => {
+      // Corregir el contenedor principal
+      const mainContent = document.querySelector('.main-content-box');
+      if (mainContent) {
+        mainContent.style.marginLeft = '0';
+        mainContent.style.paddingLeft = '0';
+      }
+
+      // Buscar por la clase específica
+      const specificElement = document.querySelector('.main-content-box.MuiBox-root.css-10pz13g');
+      if (specificElement) {
+        specificElement.style.marginLeft = '0';
+        specificElement.style.paddingLeft = '0';
+      }
+
+      // También corregir cualquier otro elemento problemático
+      const otherElements = document.querySelectorAll('.MuiDrawer-docked + .MuiBox-root');
+      otherElements.forEach(el => {
+        el.style.marginLeft = '0';
+        el.style.paddingLeft = '0';
+      });
+    };
+    
+    fixMarginLeft();
+    // Ejecutar con un retraso para asegurar que MUI haya terminado el renderizado
+    const timer = setTimeout(fixMarginLeft, 50);
+    
+    return () => clearTimeout(timer);
+  }, [open, isMobile]);
 
   const toggleDrawer = () => {
     setOpen(!open);
@@ -174,7 +265,10 @@ const AdminLayout = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', overflow: 'hidden' }}>
+      {/* Aplicar estilos globales para corregir específicamente el margin-left */}
+      {globalStyles}
+      
       <AppBar 
         position="fixed" 
         sx={{ 
@@ -224,7 +318,6 @@ const AdminLayout = () => {
               }}
             >
               <Typography variant="subtitle2" fontWeight="bold">
-                {/* CAMBIO AQUÍ: usuario en lugar de user */}
                 {usuario?.nombre || 'Administrador'}
               </Typography>
             </Box>
@@ -282,7 +375,6 @@ const AdminLayout = () => {
       >
         <Box sx={{ bgcolor: theme.palette.primary.main, py: 2, px: 2, color: 'white' }}>
           <Typography variant="subtitle2" fontWeight="bold">
-            {/* CAMBIO AQUÍ: usuario en lugar de user */}
             {usuario?.nombre || 'Administrador'}
           </Typography>
           <Typography variant="caption">
@@ -316,21 +408,12 @@ const AdminLayout = () => {
         </MenuItem>
       </Menu>
       
-      <Drawer
+      {/* Uso del FixedDrawer personalizado */}
+      <FixedDrawer
         variant={isMobile ? "temporary" : "persistent"}
         open={open}
         onClose={isMobile ? toggleDrawer : undefined}
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            borderRight: '1px solid rgba(0, 0, 0, 0.08)',
-            backgroundColor: theme.palette.background.paper,
-            boxShadow: open && !isMobile ? '4px 0 8px rgba(0, 0, 0, 0.05)' : 'none',
-          },
-        }}
+        drawerwidth={drawerWidth}
       >
         <Toolbar 
           sx={{ 
@@ -359,7 +442,7 @@ const AdminLayout = () => {
         <Box 
           sx={{ 
             overflow: 'auto', 
-            py: 0, // Eliminado el padding vertical
+            py: 0, 
             px: 2,
             backgroundColor: alpha(theme.palette.background.paper, 0.7),
             flexGrow: 1,
@@ -375,8 +458,8 @@ const AdminLayout = () => {
               top: 0,
               zIndex: 2,
               backgroundColor: alpha(theme.palette.background.paper, 0.95),
-              pt: 0, // Eliminado el padding superior
-              mt: 0, // Eliminado el margin superior
+              pt: 0,
+              mt: 0,
               borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
             }}
           >
@@ -475,35 +558,6 @@ const AdminLayout = () => {
           
           <List>
             <ListItemButton 
-              onClick={() => handleNavigate('/admin/settings')}
-              selected={location.pathname === '/admin/settings'}
-              sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                '&.Mui-selected': {
-                  backgroundColor: alpha(theme.palette.grey[900], 0.1),
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.grey[900], 0.15),
-                  },
-                },
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.grey[900], 0.05),
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: '40px' }}>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Configuración" 
-                primaryTypographyProps={{ 
-                  fontSize: 14,
-                  fontWeight: 'medium'
-                }} 
-              />
-            </ListItemButton>
-            
-            <ListItemButton 
               onClick={handleLogout}
               sx={{
                 borderRadius: 2,
@@ -536,34 +590,36 @@ const AdminLayout = () => {
             </Typography>
           </Box>
         </Box>
-      </Drawer>
+      </FixedDrawer>
       
+      {/* Box principal sin margin-left */}
       <Box 
-        component="main" 
+        component="main"
+        className="main-content-box"
         sx={{ 
           flexGrow: 1, 
-          p: { xs: 2, sm: 3 }, 
-          pt: { xs: 3, sm: 4 },
-          mt: { xs: 7, sm: 8 },
+          width: '100%',
+          marginLeft: '0 !important',
+          paddingLeft: '0 !important',
+          padding: 0,
+          height: '100vh',
+          overflow: 'auto',
           backgroundColor: alpha(theme.palette.background.default, 0.8),
-          minHeight: '100vh',
-          transition: theme.transitions.create(['margin', 'width'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-          ...(open && !isMobile && {
-            width: `calc(100% - ${drawerWidth}px)`,
-            marginLeft: `${drawerWidth}px`,
-            transition: theme.transitions.create(['margin', 'width'], {
-              easing: theme.transitions.easing.easeOut,
-              duration: theme.transitions.duration.enteringScreen,
-            }),
-          }),
+          transition: 'none'
         }}
       >
-        <Container maxWidth="xl">
-          <Outlet />
-        </Container>
+        <Toolbar /> {/* Espaciador para que el contenido comience debajo del AppBar */}
+        
+        {/* Contenedor condicional para diferentes tipos de páginas */}
+        {isDashboard ? (
+          <Box sx={{ width: '100%', m: 0, p: 2 }}>
+            <Outlet />
+          </Box>
+        ) : (
+          <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '1536px', mx: 'auto' }}>
+            <Outlet />
+          </Box>
+        )}
       </Box>
     </Box>
   );

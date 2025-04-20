@@ -1,27 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  FormControlLabel,
-  Switch,
-  Alert,
-  CircularProgress,
-  Breadcrumbs,
-  Link,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  InputAdornment,
-  SelectChangeEvent
+  Box, Button, TextField, Typography, Paper, FormControlLabel,
+  Switch, Alert, CircularProgress, Breadcrumbs, Link,
+  FormControl, InputLabel, Select,
+  MenuItem, InputAdornment, SelectChangeEvent
 } from '@mui/material';
 import { Save, ArrowBack } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../services/api';
 import ImageUpload from '../../../components/common/ImageUpload';
+// Importar el servicio para eliminar archivos
+import { deleteFile } from '../../../services/uploadService';
 
 interface Categoria {
   id: number;
@@ -58,6 +47,7 @@ const ProductForm = () => {
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [initialImage, setInitialImage] = useState<string | null>(null);
+  const [removedImage, setRemovedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [categoryLoading, setCategoryLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -134,6 +124,17 @@ const ProductForm = () => {
     fetchProduct();
   }, [fetchProduct]);
 
+  // Limpiar recursos al desmontar el componente o cuando se navega a otra ruta
+  useEffect(() => {
+    return () => {
+      // Si hay una imagen que se removió pero no se envió el formulario, eliminarla
+      if (removedImage && removedImage !== 'default.png') {
+        deleteFile('productos', removedImage)
+          .catch(err => console.error('Error al eliminar imagen temporal:', err));
+      }
+    };
+  }, [removedImage]);
+
   // Manejadores de cambio separados por tipo de control
   
   // Para TextField
@@ -166,6 +167,11 @@ const ProductForm = () => {
   // Manejar cambio en la imagen
   const handleImageChange = (file: File | null) => {
     setImageFile(file);
+    
+    // Si se está cambiando la imagen, debemos registrar la imagen anterior para posible eliminación
+    if (file && initialImage && initialImage !== 'default.png') {
+      setRemovedImage(initialImage);
+    }
   };
 
   // Enviar formulario
@@ -199,6 +205,10 @@ const ProductForm = () => {
         await api.put(`/productos/${id}`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
+        
+        // Si subimos una nueva imagen, el backend ya se encarga de eliminar la anterior
+        // así que reiniciamos el estado removedImage
+        setRemovedImage(null);
         setSuccess('Producto actualizado correctamente');
       } else {
         await api.post('/productos', formDataToSend, {
@@ -220,6 +230,7 @@ const ProductForm = () => {
           });
           setImageFile(null);
           setInitialImage(null);
+          setRemovedImage(null);
         }
       }
     } catch (err: any) {

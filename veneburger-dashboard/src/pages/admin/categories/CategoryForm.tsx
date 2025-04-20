@@ -1,21 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  FormControlLabel,
-  Switch,
-  Alert,
-  CircularProgress,
-  Breadcrumbs,
-  Link
+  Box, Button, TextField, Typography, Paper,
+  FormControlLabel, Switch, Alert, CircularProgress, Breadcrumbs, Link
 } from '@mui/material';
 import { Save, ArrowBack } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../services/api';
 import ImageUpload from '../../../components/common/ImageUpload';
+// Importar el servicio para eliminar archivos
+import { deleteFile } from '../../../services/uploadService';
 
 interface CategoryFormData {
   nombre: string;
@@ -40,6 +33,7 @@ const CategoryForm = () => {
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [initialImage, setInitialImage] = useState<string | null>(null);
+  const [removedImage, setRemovedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +70,17 @@ const CategoryForm = () => {
     fetchCategory();
   }, [id, isEditing]);
 
+  // Limpiar recursos al desmontar el componente o cuando se navega a otra ruta
+  useEffect(() => {
+    return () => {
+      // Si hay una imagen que se removió pero no se envió el formulario, eliminarla
+      if (removedImage && removedImage !== 'default.png') {
+        deleteFile('categorias', removedImage)
+          .catch(err => console.error('Error al eliminar imagen temporal:', err));
+      }
+    };
+  }, [removedImage]);
+
   // Manejar cambios en los campos de texto
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -99,6 +104,11 @@ const CategoryForm = () => {
   // Manejar cambio en la imagen
   const handleImageChange = (file: File | null) => {
     setImageFile(file);
+    
+    // Si se está cambiando la imagen, debemos registrar la imagen anterior para posible eliminación
+    if (file && initialImage && initialImage !== 'default.png') {
+      setRemovedImage(initialImage);
+    }
   };
 
   // Enviar formulario
@@ -127,6 +137,10 @@ const CategoryForm = () => {
         await api.put(`/categorias/${id}`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
+        
+        // Si subimos una nueva imagen, el backend ya se encarga de eliminar la anterior
+        // así que reiniciamos el estado removedImage
+        setRemovedImage(null);
         setSuccess('Categoría actualizada correctamente');
       } else {
         await api.post('/categorias', formDataToSend, {
@@ -145,6 +159,7 @@ const CategoryForm = () => {
           });
           setImageFile(null);
           setInitialImage(null);
+          setRemovedImage(null);
         }
       }
     } catch (err: any) {
