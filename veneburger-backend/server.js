@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:3001'];
+  : ['http://localhost:3001', 'http://localhost:3002'];
 
 app.use(cors({
   origin: function(origin, callback) {
