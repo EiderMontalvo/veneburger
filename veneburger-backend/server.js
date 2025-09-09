@@ -5,6 +5,8 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
 const { rateLimit } = require('express-rate-limit');
 const { testConnection } = require('./src/config/database');
 const db = require('./src/models');
@@ -39,19 +41,33 @@ const allowedOrigins = process.env.CORS_ORIGIN
 
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (origin && allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('No permitido por CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   credentials: true,
   maxAge: 86400
 }));
 
+app.use(cookieParser());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection);
+
+app.get('/api/csrf-token', (req, res) => {
+  res.cookie('XSRF-TOKEN', req.csrfToken(), {
+    httpOnly: false,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production'
+  });
+  res.status(200).json({ csrfToken: req.csrfToken() });
+});
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -148,7 +164,9 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
 process.on('unhandledRejection', (err) => {
   logger.error('ERROR NO CAPTURADO (Promise):', err);
@@ -159,3 +177,5 @@ process.on('uncaughtException', (err) => {
   logger.error('ERROR NO CAPTURADO (Exception):', err);
   process.exit(1);
 });
+
+module.exports = app;

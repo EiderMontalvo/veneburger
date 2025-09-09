@@ -1,5 +1,4 @@
 const { body, param, query, validationResult } = require('express-validator');
-const { sanitizeParam, sanitizeBody, sanitizeQuery } = require('express-validator');
 
 /**
  * Middleware para validar resultados
@@ -316,6 +315,161 @@ exports.diaEspecialValidation = {
       .if(body('tipo').equals('horario_especial'))
       .notEmpty().withMessage('La hora de cierre es obligatoria para horario especial')
       .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).withMessage('Formato de hora inválido (HH:MM:SS)')
+      .escape()
+  ]
+};
+
+
+/**
+ * Validaciones para usuarios
+ */
+exports.usuarioValidation = {
+  crear: [
+    body('nombre')
+      .trim()
+      .notEmpty().withMessage('El nombre es obligatorio')
+      .isLength({ min: 2, max: 50 }).withMessage('El nombre debe tener entre 2 y 50 caracteres')
+      .escape(),
+    body('email')
+      .trim()
+      .isEmail().withMessage('Ingrese un email válido')
+      .normalizeEmail()
+      .escape(),
+    body('password')
+      .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
+      .escape(),
+    body('rol')
+      .optional()
+      .isIn(['admin', 'cliente', 'repartidor']).withMessage('Rol inválido')
+      .escape()
+  ],
+  actualizar: [
+    param('id')
+      .isInt({ min: 1 }).withMessage('ID de usuario inválido')
+      .escape(),
+    body('nombre')
+      .optional()
+      .trim()
+      .isLength({ min: 2, max: 50 }).withMessage('El nombre debe tener entre 2 y 50 caracteres')
+      .escape(),
+    body('email')
+      .optional()
+      .trim()
+      .isEmail().withMessage('Ingrese un email válido')
+      .normalizeEmail()
+      .escape(),
+    body('rol')
+      .optional()
+      .isIn(['admin', 'cliente', 'repartidor']).withMessage('Rol inválido')
+      .escape()
+  ],
+  cambiarPassword: [
+    param('id')
+      .isInt({ min: 1 }).withMessage('ID de usuario inválido')
+      .escape(),
+    body('password')
+      .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
+      .escape()
+  ]
+};
+
+/**
+ * Validaciones para cremas
+ */
+exports.cremaValidation = {
+  crear: [
+    body('nombre')
+      .trim()
+      .notEmpty().withMessage('El nombre es obligatorio')
+      .isLength({ min: 2, max: 60 }).withMessage('El nombre debe tener entre 2 y 60 caracteres')
+      .escape(),
+    body('precio')
+      .notEmpty().withMessage('El precio es obligatorio')
+      .isFloat({ min: 0 }).withMessage('El precio debe ser un número positivo')
+      .escape(),
+    body('disponible')
+      .optional()
+      .isBoolean().withMessage('Disponible debe ser booleano')
+      .escape()
+  ],
+  actualizar: [
+    param('id')
+      .isInt({ min: 1 }).withMessage('ID de crema inválido')
+      .escape(),
+    body('nombre')
+      .optional()
+      .trim()
+      .isLength({ min: 2, max: 60 }).withMessage('El nombre debe tener entre 2 y 60 caracteres')
+      .escape(),
+    body('precio')
+      .optional()
+      .isFloat({ min: 0 }).withMessage('El precio debe ser un número positivo')
+      .escape(),
+    body('disponible')
+      .optional()
+      .isBoolean().withMessage('Disponible debe ser booleano')
+      .escape()
+  ]
+};
+
+/**
+ * Validaciones para mesas
+ */
+exports.mesaValidation = {
+  crear: [
+    body('numero')
+      .notEmpty().withMessage('El número es obligatorio')
+      .isInt({ min: 1 }).withMessage('El número debe ser un entero positivo')
+      .escape(),
+    body('capacidad')
+      .optional()
+      .isInt({ min: 1 }).withMessage('La capacidad debe ser un entero positivo')
+      .escape(),
+    body('ubicacion')
+      .optional()
+      .trim()
+      .escape()
+  ],
+  actualizar: [
+    param('id')
+      .isInt({ min: 1 }).withMessage('ID de mesa inválido')
+      .escape(),
+    body('numero')
+      .optional()
+      .isInt({ min: 1 }).withMessage('El número debe ser un entero positivo')
+      .escape(),
+    body('capacidad')
+      .optional()
+      .isInt({ min: 1 }).withMessage('La capacidad debe ser un entero positivo')
+      .escape(),
+    body('ubicacion')
+      .optional()
+      .trim()
+      .escape()
+  ],
+  cambiarEstado: [
+    param('id')
+      .isInt({ min: 1 }).withMessage('ID de mesa inválido')
+      .escape(),
+    body('estado')
+      .notEmpty().withMessage('El estado es obligatorio')
+      .isIn(['disponible', 'ocupada', 'reservada', 'mantenimiento']).withMessage('Estado de mesa inválido')
+      .escape()
+  ]
+};
+
+/**
+ * Validaciones para subida de archivos
+ */
+exports.uploadValidation = {
+  eliminar: [
+    param('type')
+      .trim()
+      .isIn(['productos', 'categorias', 'comprobantes']).withMessage('Tipo inválido')
+      .escape(),
+    param('filename')
+      .trim()
+      .matches(/^[\w.-]+$/).withMessage('Nombre de archivo inválido')
       .escape()
   ]
 };
