@@ -76,10 +76,9 @@ const ImageUpload = ({
     setIsLoading(true);
     try {
       // Si hay una imagen del servidor (no es una vista previa local)
-      if (initialImage && !previewUrl?.startsWith('data:') && !previewUrl?.startsWith('blob:')) {
-        console.log('Eliminando imagen:', initialImage);
-        await deleteFile(folder, initialImage);
-      }
+        if (initialImage && !previewUrl?.startsWith('data:') && !previewUrl?.startsWith('blob:')) {
+          await deleteFile(folder, initialImage);
+        }
       
       // Limpiar la vista previa y notificar al padre
       setPreviewUrl(null);

@@ -22,11 +22,13 @@ exports.listarUsuarios = async (req, res) => {
     }
     
     if (buscar) {
+      // Sanitizar el término de búsqueda para prevenir inyección SQL
+      const sanitizedBuscar = buscar.replace(/[^\w@.\s-]/g, '');
       whereClause[Op.or] = [
-        { nombre: { [Op.like]: `%${buscar}%` } },
-        { apellidos: { [Op.like]: `%${buscar}%` } },
-        { email: { [Op.like]: `%${buscar}%` } },
-        { telefono: { [Op.like]: `%${buscar}%` } }
+        { nombre: { [Op.like]: `%${sanitizedBuscar}%` } },
+        { apellidos: { [Op.like]: `%${sanitizedBuscar}%` } },
+        { email: { [Op.like]: `%${sanitizedBuscar}%` } },
+        { telefono: { [Op.like]: `%${sanitizedBuscar}%` } }
       ];
     }
     
