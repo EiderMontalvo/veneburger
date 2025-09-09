@@ -14,5 +14,3 @@ fs.writeFileSync(
   path.join(__dirname, '../../export/apiRoutes.js'),
   apiRoutesJS
 );
-
-console.log('✅ Rutas API exportadas correctamente para el frontend');

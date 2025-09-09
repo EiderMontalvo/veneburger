@@ -8,8 +8,14 @@ exports.eliminarArchivo = (tipo, nombreArchivo) => {
       return resolve(false);
     }
 
-    const rutaArchivo = path.join(__dirname, `../../uploads/${tipo}`, nombreArchivo);
-    
+    const baseDir = path.resolve(__dirname, `../../uploads/${tipo}`);
+    const rutaArchivo = path.resolve(baseDir, nombreArchivo);
+
+    // Prevenir path traversal asegurando que el archivo esté dentro del directorio permitido
+    if (!rutaArchivo.startsWith(baseDir + path.sep)) {
+      return resolve(false);
+    }
+
     if (fs.existsSync(rutaArchivo)) {
       fs.unlink(rutaArchivo, (err) => {
         if (err) {
@@ -48,7 +54,7 @@ exports.deleteFile = async (req, res) => {
     });
   }
   
-  const resultado = await this.eliminarArchivo(type, sanitizedFilename);
+  const resultado = await exports.eliminarArchivo(type, sanitizedFilename);
   
   if (resultado) {
     return res.status(200).json({

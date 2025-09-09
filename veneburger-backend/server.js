@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use('/api-docs', swagger.serve, swagger.setup);
 
 app.use(helmet());
+app.disable('x-powered-by');
 
 if (process.env.NODE_ENV === 'production') {
   app.use(compression());
