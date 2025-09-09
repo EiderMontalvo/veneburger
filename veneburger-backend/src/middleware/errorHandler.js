@@ -14,9 +14,16 @@ module.exports = (err, req, res, next) => {
 
   // Determinar código de estado
   let statusCode = err.statusCode || 500;
-  let errorMessage = process.env.NODE_ENV === 'production' 
+  let errorMessage = process.env.NODE_ENV === 'production'
     ? 'Ocurrió un error en el servidor'
     : err.message;
+
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Token CSRF inválido o faltante'
+    });
+  }
 
   // Manejar errores específicos
   if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
