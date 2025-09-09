@@ -1,5 +1,5 @@
 // src/components/common/ImageUpload.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -29,6 +29,7 @@ const ImageUpload = ({
 }: ImageUploadProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   // Al iniciar o cuando cambia initialImage, actualizar la vista previa
   useEffect(() => {
@@ -85,12 +86,11 @@ const ImageUpload = ({
       onImageChange(null);
       
       // Resetear el campo de entrada
-      const fileInput = document.getElementById('image-upload-input') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Error al eliminar la imagen:', error);
+      alert('No se pudo eliminar la imagen.');
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +160,7 @@ const ImageUpload = ({
       >
         Seleccionar Imagen
         <input
-          id="image-upload-input"
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileChange}

@@ -66,7 +66,6 @@ const Dashboard = () => {
       setVentasDiarias(response.data.data);
     } catch (error) {
       setErrorDaily(error.response?.data?.message || 'Error al cargar ventas diarias');
-      console.error('Error al cargar ventas diarias:', error);
     } finally {
       setLoadingDaily(false);
     }
@@ -83,7 +82,6 @@ const Dashboard = () => {
       setVentasMensuales(response.data.data);
     } catch (error) {
       setErrorMonthly(error.response?.data?.message || 'Error al cargar ventas mensuales');
-      console.error('Error al cargar ventas mensuales:', error);
     } finally {
       setLoadingMonthly(false);
     }
@@ -102,7 +100,6 @@ const Dashboard = () => {
       setProductosMasVendidos(response.data.data);
     } catch (error) {
       setErrorProducts(error.response?.data?.message || 'Error al cargar productos más vendidos');
-      console.error('Error al cargar productos más vendidos:', error);
     } finally {
       setLoadingProducts(false);
     }
@@ -121,7 +118,6 @@ const Dashboard = () => {
       setVentasPorTipo(response.data.data);
     } catch (error) {
       setErrorTypes(error.response?.data?.message || 'Error al cargar ventas por tipo');
-      console.error('Error al cargar ventas por tipo:', error);
     } finally {
       setLoadingTypes(false);
     }

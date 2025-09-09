@@ -65,12 +65,10 @@ const ProductForm = () => {
       if (response.data && response.data.data && Array.isArray(response.data.data.categorias)) {
         setCategories(response.data.data.categorias);
       } else {
-        console.warn('Formato de respuesta inesperado en categorías:', response.data);
         setCategories([]);
         throw new Error('Formato de respuesta inesperado');
       }
     } catch (err) {
-      console.error('Error al cargar categorías:', err);
       setError('No se pudieron cargar las categorías. Por favor, recarga la página.');
     } finally {
       setCategoryLoading(false);
@@ -107,13 +105,11 @@ const ProductForm = () => {
         
         setInitialImage(product.imagen || null);
       } else {
-        console.warn('Formato de respuesta inesperado en producto:', response.data);
         throw new Error('No se pudo obtener la información del producto');
       }
       
       setError(null);
     } catch (err: any) {
-      console.error('Error al cargar producto:', err);
       setError(err.response?.data?.message || 'No se pudo cargar la información del producto. Por favor, intenta más tarde.');
     } finally {
       setLoading(false);
@@ -130,7 +126,7 @@ const ProductForm = () => {
       // Si hay una imagen que se removió pero no se envió el formulario, eliminarla
       if (removedImage && removedImage !== 'default.png') {
         deleteFile('productos', removedImage)
-          .catch(err => console.error('Error al eliminar imagen temporal:', err));
+          .catch(() => null);
       }
     };
   }, [removedImage]);
@@ -234,7 +230,6 @@ const ProductForm = () => {
         }
       }
     } catch (err: any) {
-      console.error('Error al guardar producto:', err);
       setError(err.response?.data?.message || err.message || 'Error al guardar el producto');
     } finally {
       setSubmitting(false);

@@ -13,7 +13,6 @@ export const deleteFile = async (
       await api.delete(`/uploads/${type}/${filename}`);
       return true;
     } catch (error) {
-      console.error('Error al eliminar archivo:', error);
       return false;
     }
   };
