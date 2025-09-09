@@ -86,9 +86,10 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   maxAge: '7d',
-  setHeaders: function (res, req) {
+  setHeaders: function (res, path, stat) {
+    const req = res.req;
     const origin = req.headers && req.headers.origin && allowedOrigins.includes(req.headers.origin)
-      ? req.headers.origin 
+      ? req.headers.origin
       : allowedOrigins[0];
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET');
